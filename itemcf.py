@@ -166,9 +166,10 @@ class ItemBasedCF():
                 % (precision, recall, coverage, popularity) ,sys.stderr)
 
 
-#if __name__ == '__main__':
-#    ratingfile = './datasets/ml-latest-small/ratings.csv'
-#    itemcf = ItemBasedCF()
-#    itemcf.generate_dataset(ratingfile)
-#    itemcf.calc_movie_sim()
-#    itemcf.evaluate()
+if __name__ == '__main__' :
+    
+    ratingfile = './datasets/ml-latest-small/ratings.csv'
+    itemcf = ItemBasedCF()
+    itemcf.generate_dataset(ratingfile)
+    itemcf.calc_movie_sim()
+    itemcf.evaluate()

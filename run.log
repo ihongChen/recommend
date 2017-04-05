@@ -1,0 +1,26 @@
+Similar movie number = 20 <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+Recommended movie number = 10 <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+loading ./datasets/ml-latest-small/ratings.csv(0) <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+loading ./datasets/ml-latest-small/ratings.csv(100000) <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+load ./datasets/ml-latest-small/ratings.csv succ <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+split training set and test set succ <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+train set = 69948 <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+test set = 30056 <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+counting movies number and popularity... <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+count movies number and popularity succ <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+total movie number = 8030 <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+building co-rated users matrix... <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+build co-rated users matrix succ <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+calculating movie similarity matrix... <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+calculating movie similarity factor(2000000) <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+calculating movie similarity factor(4000000) <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+calculating movie similarity factor(6000000) <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+calculating movie similarity factor(8000000) <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+calculating movie similarity factor(10000000) <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+calculating movie similarity factor(12000000) <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+calculate movie similarity matrix(similarity factor) succ <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+Total similarity factor number = 13535044 <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+Evaluation start... <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+recommended for 0 users <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+recommended for 500 users <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
+precision=0.2873	recall=0.0641	coverage=0.0858	popularity=4.4145 <_io.TextIOWrapper name='<stderr>' mode='w' encoding='UTF-8'>
