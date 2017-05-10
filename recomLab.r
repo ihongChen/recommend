@@ -58,7 +58,7 @@ r
 names(getModel(r))
 getModel(r)$topN
 
-recom <- predict(r,Jester5k[1001:1002],n=5)
+recom <- predict(r,Jester5k[1001:1002],n=3)
 recom
 as(recom,"list")
 recom3 <- bestN(recom,n=3)
@@ -103,6 +103,7 @@ results
 getConfusionMatrix(results)
 avg(results)
 
+plot(results)
 plot(results,annotate=T)
 plot(results, "prec/rec", annotate=TRUE)
 
@@ -129,5 +130,6 @@ names(results)
 
 plot(results,annotate=c(1,3),legend = "bottomright")
 plot(results,"prec/rec",annotate=c(1,3),legend="topleft")
+
 
 
