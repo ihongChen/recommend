@@ -6,7 +6,7 @@ library(RODBC)
 library(tidyverse)
 library(recommenderlab)
 library(reshape2)
-
+setwd("D:/ihong/work/mma基金/recom")
 ## 連結資料庫
 conn <- odbcDriverConnect("Driver=SQL Server;Server=dbm_public;Database=project2017;Uid=sa;Pwd=01060728;")
 conn2 <- odbcDriverConnect("Driver=SQL Server;Server=dbm_public;Database=test;Uid=sa;Pwd=01060728;")
@@ -16,7 +16,8 @@ fund=sqlQuery(conn,sql_fund)
 
 dim(fund) # 171,914 *3 
 save(fund,file="fund.RData")
-colnames(fund)
+load('fund.Rdata')
+# colnames(fund)
 fund1 <- 
   fund %>%
   group_by(身分證字號,基金中文名稱) %>%
@@ -28,10 +29,10 @@ fund1 <-
   fund1 %>%
   arrange(desc(n))
 
-fund1 %>% distinct(基金中文名稱) # 1377 Item
+# fund1 %>% distinct(基金中文名稱) # 2301 Item
 
-fund1 %>% 
-  distinct(身分證字號) # 5481 user 
+# fund1 %>% 
+#   distinct(身分證字號) # 55666 user 
 
 
 ## id歸戶-每個用戶擁有的基金庫存
@@ -41,31 +42,59 @@ fund2 <-fund1 %>%
 rownames(fund2) <-fund2$身分證字號
 fund2$身分證字號 <-NULL
 
-sum(fund2[1,],na.rm=T)
-dim(fund2) # 55,666*2,301 (user-item)
+# sum(fund2[1,],na.rm=T)
+# dim(fund2) # 55,666*2,301 (user-item)
 
 
 ######### use recommenderLab #########################
 ## 參考 vignette("recommenderlab") 
 
 
-# 物品相似度 -------------------------------------------------------------------
+
+# user-item  -------------------------------------------------------------------
 ui_trans_m <- data.matrix(fund2)
-dim(ui_trans_m) # 55666*2301 - UI
+# dim(ui_trans_m) # 55666*2301 - UI
 
 ui_trans <- as(ui_trans_m,"realRatingMatrix")
-image(ui_trans,main = "U-I table")
-colCounts(ui_trans)[1:5]
+# image(ui_trans,main = "U-I table")
+# colCounts(ui_trans)[1:5]
 
 r_b <- binarize(ui_trans,minRating=1)
 r_b <- as(r_b,"binaryRatingMatrix")
+r_bex <-r_b[rowCounts(r_b)>4] # 排除庫存基金數<5
+# image(r_b) # 7,125 人
 
-image(r_b,main="User-Item binary table")
+# image(r_b,main="User-Item binary table")
+# image(r_bex,main="U-I (排除持有數<5)")
 
-simItem_table <- similarity(r_b,method="cosine",which="items") ## 基於cosine相似度
+# 資料探索 --------------------------------------------------------------------
+# dim(r_b) # 55666 users * 2301 items
+## 檢查資料
+rowCounts(r_b[1,])
+rowCounts(r_b[2,])
+rowCounts(r_b[10,])
+hist(rowCounts(r_b), breaks=100)
+# 用戶持有
+sort(rowCounts(r_b),decreasing = T)[10000:15000] # 前10000名用戶,持有數至少4檔基金
+table(rowCounts(r_b)) #大部分用戶持有僅持有一檔(種)基金
+table(rowCounts(r_bex))
+
+# 物品相似度 -------------------------------------------------------------------
+
+
+# simItem_table <- similarity(r_b,method="cosine",which="items") ## 基於cosine相似度
 simItem_table <- similarity(r_b,method="jaccard",which="items") ## 基於jaccard相似度
 simItem_table_M <-as(simItem_table,"matrix")
+## 僅涵蓋購買基金數>4, 共計有7125人
+simItem_table_ex <- similarity(r_bex,method="jaccard",which="items")
+simItem_table_exM <- as(simItem_table_ex,"matrix")
+simItem_table_ex_exclude <- ifelse(simItem_table_exM<0.01,NA,simItem_table_exM)
 
+simItem_sparse_ex <-as(simItem_table_ex_exclude,"realRatingMatrix")
+image(simItem_sparse_ex,xlab="Item1",ylab="Item2") # 
+
+
+#### 考慮全部購買55,666人
 simItem_table_exclude <- ifelse(simItem_table_M<0.01,NA,simItem_table_M) #排除<0.01相似度
 # simItem_table_exclude %>% head() %>% View()
 simItem_sparse <- as(simItem_table_exclude,"realRatingMatrix")
@@ -120,18 +149,6 @@ temp <- simItem_sparse[names(hot100Fund),names(hot100Fund)]
 image(simItem_sparse[1:100,1:100])
 
 
-# 資料探索 --------------------------------------------------------------------
-dim(r_b) # 55666 users * 2301 items
-## 檢查資料
-rowCounts(r_b[1,])
-rowCounts(r_b[2,])
-rowCounts(r_b[10,])
-hist(rowCounts(r_b), breaks=100)
-# 用戶持有
-sort(rowCounts(r_b),decreasing = T)[10000:15000] # 前10000名用戶,持有數至少4檔基金
-table(rowCounts(r_b)) #大部分用戶持有僅持有一檔(種)基金
-
-
 # 推薦模型 --------------------------------------------------------------
 recommenderRegistry$get_entries(dataType="binaryRatingMatrix")
 ####### popular ####### 
@@ -160,12 +177,80 @@ names(getModel(r_item))
 image(getModel(r_item)$sim)
 
 # 模型測試區 ---------------------------------------------------------------------
+### popular ###
+# r_b: binary rating matrix 全資料/ r:bex: binary rating 排除庫存持有數<4 用戶
 
 scheme<-evaluationScheme(r_b[1:50000],method="cross",k=4,given=-1)
 results_popular <- evaluate(scheme,method="POPULAR",type="topNList",
                             n=c(1,3,5,10))
 
-results_
+avg(results_popular) ## n=5, prec: 3%, recall: 15%
+
+results_ibcf <- evaluate(scheme,method="IBCF",type="topNList",
+                         n=c(1,3,5,10))
+avg(results_ibcf) ## n=5, prec: 3.2%, recall: 16%
+
+results_ubcf <- evaluate(scheme,method="UBCF",type="topNList",
+                         n=c(1,3,5,10))
+
+####################################################################
+##   算法評估
+####################################################################
+
+algorithms <- list(
+  "random items" = list(name="RANDOM"),
+  "popular items" = list(name="POPULAR"),
+  "user-based CF" = list(name="UBCF",param=list(nn=50)),
+  "item-based CF" = list(name="IBCF",param=list(k=50))
+  # "SVD approx" = list(name="SVD",param=list(k=50))
+)
+## 排除持有數<4 === 共7,125 users 2,301 items #
+r_bex
+scheme_rbex_split <- evaluationScheme(r_bex,method="split",train=0.9,k=1,given=-1) # split
+
+scheme_rbex_cv <- evaluationScheme(r_bex,method="cross",k=4,given=-1) # cross
+ev_resultEx_split <- evaluate(scheme_rbex_split,algorithms,type="topNList",
+                          n=c(1,3,5,10,20))
+ev_resultEx_cross <- evaluate(scheme_rbex_cv,algorithms,type="topNList",
+                          n=c(1,3,5,10,20))
+
+
+plot(resultEx_split,annotate=c(1,3))
+plot(resultEx_cross,annotate=c(1,3))
+avg(resultEx_cross)
+
+save(ev_resultEx_split,ev_resultEx_cross,file="ev_result.RData")
+load('ev_result.RData')
+
+## predict
+
+rec_popular <- Recommender(r_bex,method="popular")
+rec_ubcf <- Recommender(r_bex,method = "UBCF")
+rec_ibcf <- Recommender(r_bex,method = "IBCF")
+
+pred_popular <- predict(rec_popular, r_bex[1:10], type="topNList",n=5)
+pred_ubcf <- predict(rec_ubcf,r_bex[1:10],type="topNList",n=5)
+pred_ibcf <- predict(rec_ibcf,r_bex[1:10],type="topNList",n=5)
+
+as(pred_popular,"list")
+as(pred_ubcf,"list")
+as(pred_ibcf,"list")
+
+rowCounts(r_bex[1,])
+rowCounts(r_bex[2,])
+
+
+
+# ## 不排除 ===共55,666 user, 2,301 items === 記憶體超過4.3G(UBCF) ===
+# r_b
+# scheme_cross <-evaluationScheme(r_b,method="cross",k=4,given=-1)
+# result_cross <- evaluate(scheme_cross,algorithms,type="topNList",
+#                          n=c(1,3,5,10,20))
+# plot(result_cross)
+
+
+
+
 ##############################
 m <- data.matrix(fund2)
 r <- as(m,"realRatingMatrix")
