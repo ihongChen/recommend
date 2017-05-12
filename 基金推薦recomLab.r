@@ -6,10 +6,10 @@ library(RODBC)
 library(tidyverse)
 library(recommenderlab)
 library(reshape2)
-setwd("D:/ihong/work/mma基金/recom")
+
 ## 連結資料庫
 conn <- odbcDriverConnect("Driver=SQL Server;Server=dbm_public;Database=project2017;Uid=sa;Pwd=01060728;")
-conn2 <- odbcDriverConnect("Driver=SQL Server;Server=dbm_public;Database=test;Uid=sa;Pwd=01060728;")
+
 # 取資料-> 171,914
 sql_fund <- "SELECT * FROM [基金推薦_庫存明細]"
 fund=sqlQuery(conn,sql_fund)
@@ -17,7 +17,8 @@ fund=sqlQuery(conn,sql_fund)
 dim(fund) # 171,914 *3 
 save(fund,file="fund.RData")
 load('fund.Rdata')
-# colnames(fund)
+
+## 
 fund1 <- 
   fund %>%
   group_by(身分證字號,基金中文名稱) %>%
@@ -68,57 +69,57 @@ r_bex <-r_b[rowCounts(r_b)>4] # 排除庫存基金數<5
 # image(r_bex,main="U-I (排除持有數<5)")
 
 # 資料探索 --------------------------------------------------------------------
-# dim(r_b) # 55666 users * 2301 items
+# dim(r_b) # 55,666 users * 2,301 items
 ## 檢查資料
-rowCounts(r_b[1,])
-rowCounts(r_b[2,])
-rowCounts(r_b[10,])
-hist(rowCounts(r_b), breaks=100)
-# 用戶持有
-sort(rowCounts(r_b),decreasing = T)[10000:15000] # 前10000名用戶,持有數至少4檔基金
-table(rowCounts(r_b)) #大部分用戶持有僅持有一檔(種)基金
-table(rowCounts(r_bex))
+# rowCounts(r_b[1,])
+# rowCounts(r_b[2,])
+# rowCounts(r_b[10,])
+# hist(rowCounts(r_b), breaks=100)
+# # 用戶持有
+# sort(rowCounts(r_b),decreasing = T)[10000:15000] # 前10000名用戶,持有數至少4檔基金
+# table(rowCounts(r_b)) #大部分用戶持有僅持有一檔(種)基金
+# table(rowCounts(r_bex))
 
 # 物品相似度 -------------------------------------------------------------------
 
-
-# simItem_table <- similarity(r_b,method="cosine",which="items") ## 基於cosine相似度
-simItem_table <- similarity(r_b,method="jaccard",which="items") ## 基於jaccard相似度
-simItem_table_M <-as(simItem_table,"matrix")
-## 僅涵蓋購買基金數>4, 共計有7125人
-simItem_table_ex <- similarity(r_bex,method="jaccard",which="items")
-simItem_table_exM <- as(simItem_table_ex,"matrix")
-simItem_table_ex_exclude <- ifelse(simItem_table_exM<0.01,NA,simItem_table_exM)
-
-simItem_sparse_ex <-as(simItem_table_ex_exclude,"realRatingMatrix")
-image(simItem_sparse_ex,xlab="Item1",ylab="Item2") # 
-
-
-#### 考慮全部購買55,666人
-simItem_table_exclude <- ifelse(simItem_table_M<0.01,NA,simItem_table_M) #排除<0.01相似度
-# simItem_table_exclude %>% head() %>% View()
-simItem_sparse <- as(simItem_table_exclude,"realRatingMatrix")
-
-image(simItem_sparse,xlab="Item-1",ylab="Item-2") ## 物品相似度
-
-rowCounts(simItem_sparse[1,]) ## 23 筆資料
-rowCounts(simItem_sparse[2,]) ## 6
-
-simItem_df <- as(simItem_sparse,"data.frame")
-simItem_df %>% head()
-simItem_df <- simItem_df %>% 
-  `colnames<-` (c('基金1','基金2','相似度'))
-
-dim(simItem_df)
-simItem_df %>% head() %>% rownames()
-
-vartypes = c(`基金1` = "varchar(99)",`基金2` = "varchar(99)",`相似度` = "numeric(4,3)")
-# vartypes
-## test 
-# sqlSave(conn2,simItem_df[sample(nrow(simItem_df),5),],
-#         tablename = "test2",rownames = FALSE,varTypes=vartypes)
-  
-sqlSave(conn,simItem_df,tablename = "基金推薦_基金相似度_J",rownames = FALSE,varTypes=vartypes)
+# 
+# # simItem_table <- similarity(r_b,method="cosine",which="items") ## 基於cosine相似度
+# simItem_table <- similarity(r_b,method="jaccard",which="items") ## 基於jaccard相似度
+# simItem_table_M <-as(simItem_table,"matrix")
+# ## 僅涵蓋購買基金數>4, 共計有7125人
+# simItem_table_ex <- similarity(r_bex,method="jaccard",which="items")
+# simItem_table_exM <- as(simItem_table_ex,"matrix")
+# simItem_table_ex_exclude <- ifelse(simItem_table_exM<0.01,NA,simItem_table_exM)
+# 
+# simItem_sparse_ex <-as(simItem_table_ex_exclude,"realRatingMatrix")
+# image(simItem_sparse_ex,xlab="Item1",ylab="Item2") # 
+# 
+# 
+# #### 考慮全部購買55,666人
+# simItem_table_exclude <- ifelse(simItem_table_M<0.01,NA,simItem_table_M) #排除<0.01相似度
+# # simItem_table_exclude %>% head() %>% View()
+# simItem_sparse <- as(simItem_table_exclude,"realRatingMatrix")
+# 
+# image(simItem_sparse,xlab="Item-1",ylab="Item-2") ## 物品相似度
+# 
+# rowCounts(simItem_sparse[1,]) ## 23 筆資料
+# rowCounts(simItem_sparse[2,]) ## 6
+# 
+# simItem_df <- as(simItem_sparse,"data.frame")
+# simItem_df %>% head()
+# simItem_df <- simItem_df %>% 
+#   `colnames<-` (c('基金1','基金2','相似度'))
+# 
+# dim(simItem_df)
+# simItem_df %>% head() %>% rownames()
+# 
+# vartypes = c(`基金1` = "varchar(99)",`基金2` = "varchar(99)",`相似度` = "numeric(4,3)")
+# # vartypes
+# ## test 
+# # sqlSave(conn2,simItem_df[sample(nrow(simItem_df),5),],
+# #         tablename = "test2",rownames = FALSE,varTypes=vartypes)
+#   
+# sqlSave(conn,simItem_df,tablename = "基金推薦_基金相似度_J",rownames = FALSE,varTypes=vartypes)
 
 
 # library(data.table)
@@ -150,48 +151,34 @@ image(simItem_sparse[1:100,1:100])
 
 
 # 推薦模型 --------------------------------------------------------------
-recommenderRegistry$get_entries(dataType="binaryRatingMatrix")
-####### popular ####### 
-r_popular <- Recommender(r_b[1:45000],method="POPULAR")
-names(getModel(r_popular))
-p_popular <- predict(r_popular, r_b[50000:50010], type="topNList",n=5)
-as(p_popular,"list")
-
-##### User based ######
-r_user <- Recommender(r_b[1:45000,],method="UBCF")
-p_user <- predict(r_user, r_b[50000:50010], type="topNList",n=5)
-l <- as(p_user,"list")
-
-as(bestN(p_user,n=5),"list")
-
-names(getModel(r_user))
-
-getModel(r_user)
-
-###### Item based ######
-r_item <- Recommender(r_b[1:45000,],method="IBCF")
-p_item <- predict(r_item,r_b[50000:50010],type = "topNList",n=5)
-as(bestN(p_item,n=5),"list")
-names(getModel(r_item))
-
-image(getModel(r_item)$sim)
+# recommenderRegistry$get_entries(dataType="binaryRatingMatrix")
+# ####### popular ####### 
+# r_popular <- Recommender(r_b[1:45000],method="POPULAR")
+# names(getModel(r_popular))
+# p_popular <- predict(r_popular, r_b[50000:50010], type="topNList",n=5)
+# as(p_popular,"list")
+# 
+# ##### User based ######
+# r_user <- Recommender(r_b[1:45000,],method="UBCF")
+# p_user <- predict(r_user, r_b[50000:50010], type="topNList",n=5)
+# l <- as(p_user,"list")
+# 
+# as(bestN(p_user,n=5),"list")
+# 
+# names(getModel(r_user))
+# 
+# getModel(r_user)
+# 
+# ###### Item based ######
+# r_item <- Recommender(r_b[1:45000,],method="IBCF")
+# p_item <- predict(r_item,r_b[50000:50010],type = "topNList",n=5)
+# as(bestN(p_item,n=5),"list")
+# names(getModel(r_item))
+# 
+# image(getModel(r_item)$sim)
 
 # 模型測試區 ---------------------------------------------------------------------
-### popular ###
-# r_b: binary rating matrix 全資料/ r:bex: binary rating 排除庫存持有數<4 用戶
 
-scheme<-evaluationScheme(r_b[1:50000],method="cross",k=4,given=-1)
-results_popular <- evaluate(scheme,method="POPULAR",type="topNList",
-                            n=c(1,3,5,10))
-
-avg(results_popular) ## n=5, prec: 3%, recall: 15%
-
-results_ibcf <- evaluate(scheme,method="IBCF",type="topNList",
-                         n=c(1,3,5,10))
-avg(results_ibcf) ## n=5, prec: 3.2%, recall: 16%
-
-results_ubcf <- evaluate(scheme,method="UBCF",type="topNList",
-                         n=c(1,3,5,10))
 
 ####################################################################
 ##   算法評估
@@ -205,7 +192,7 @@ algorithms <- list(
   # "SVD approx" = list(name="SVD",param=list(k=50))
 )
 ## 排除持有數<4 === 共7,125 users 2,301 items #
-r_bex
+# r_bex
 scheme_rbex_split <- evaluationScheme(r_bex,method="split",train=0.9,k=1,given=-1) # split
 
 scheme_rbex_cv <- evaluationScheme(r_bex,method="cross",k=4,given=-1) # cross
@@ -215,31 +202,88 @@ ev_resultEx_cross <- evaluate(scheme_rbex_cv,algorithms,type="topNList",
                           n=c(1,3,5,10,20))
 
 
-plot(resultEx_split,annotate=c(1,3))
-plot(resultEx_cross,annotate=c(1,3))
-avg(resultEx_cross)
+plot(ev_resultEx_split,annotate=c(1,3))
+plot(ev_resultEx_cross,annotate=c(1,3))
+avg(ev_resultEx_cross)
 
 save(ev_resultEx_split,ev_resultEx_cross,file="ev_result.RData")
 load('ev_result.RData')
 
+## 找出最佳模型  -- check recall 
+ev_dataList <- avg(ev_resultEx_cross)
+ev_dataList$`popular items`[5,'recall']
+ev_dataList$`user-based CF`[5,'recall']
+
+recall_compare <- sapply(ev_dataList,`[[`,5,'recall') 
+best_model <- names(which.max(recall_compare))
+if (best_model=='popular items') {
+  best_model <- 'popular'
+} else if (best_model=='user-based CF'){
+  best_model <- 'UBCF'
+} else if (best_model=='item-based CF'){
+  best_model <- 'IBCF'
+}
+
+
+
+# 預測結果 --------------------------------------------------------------------
+
 ## predict
 
-rec_popular <- Recommender(r_bex,method="popular")
-rec_ubcf <- Recommender(r_bex,method = "UBCF")
-rec_ibcf <- Recommender(r_bex,method = "IBCF")
+# rec_popular <- Recommender(r_bex,method="popular")
+# rec_ubcf <- Recommender(r_bex,method = 'UBCF')
+# rec_ibcf <- Recommender(r_bex,method = "IBCF")
 
-pred_popular <- predict(rec_popular, r_bex[1:10], type="topNList",n=5)
-pred_ubcf <- predict(rec_ubcf,r_bex[1:10],type="topNList",n=5)
-pred_ibcf <- predict(rec_ibcf,r_bex[1:10],type="topNList",n=5)
+# pred_popular <- predict(rec_popular, r_bex[1:10], type="topNList",n=5)
+# pred_ubcf <- predict(rec_ubcf,r_bex[1:10],type="topNList",n=5)
+# pred_ibcf <- predict(rec_ibcf,r_bex[1:10],type="topNList",n=5)
+# 
+# as(pred_popular,"list")
+# as(pred_ubcf,"list")
+# as(pred_ibcf,"list")
+# 
+# rowCounts(r_bex[1,])
+# rowCounts(r_bex[2,])
 
-as(pred_popular,"list")
-as(pred_ubcf,"list")
-as(pred_ibcf,"list")
 
-rowCounts(r_bex[1,])
-rowCounts(r_bex[2,])
+recommender_model <- Recommender(r_bex,method = best_model)
+pred_result <- predict(recommender_model,r_bex,type="topNList",n=20)
+
+pred_result_list <- as(pred_result,"list")
+
+# temp <- pred_result_list %>% head(20)
+
+df_t <- t(as.data.frame(pred_result_list,stringsAsFactors = F))
+
+itemNames <- sapply('item',paste0,c(1:20))[,1]
+
+df_exclude <- data.frame(df_t); colnames(df_exclude) <- itemNames;
 
 
+
+sqlSave(conn,hot100Fund_df,
+        tablename = "基金推薦_熱門100基金",
+        rownames = F)
+
+sqlSave(conn,df_exclude,
+        tablename = "基金推薦_個人基金Top20",
+        rownames = "uid")
+
+
+
+
+# test --------------------------------------------------------------------
+
+### 大部分UBCF推薦清單是熱門商品!!! ####
+names <- rownames(df_exclude)
+rownames(df_exclude) <- NULL
+df <- cbind(names,df_exclude)
+
+df %>% 
+  group_by(item1) %>% 
+  summarise(n=n()) %>% 
+  arrange(desc(n))
+  
 
 # ## 不排除 ===共55,666 user, 2,301 items === 記憶體超過4.3G(UBCF) ===
 # r_b
@@ -247,56 +291,6 @@ rowCounts(r_bex[2,])
 # result_cross <- evaluate(scheme_cross,algorithms,type="topNList",
 #                          n=c(1,3,5,10,20))
 # plot(result_cross)
-
-
-
-
-##############################
-m <- data.matrix(fund2)
-r <- as(m,"realRatingMatrix")
-as(r,"list")
-image(r,main="USER ITEM TABLE")
-image(normalize(r),main = "UI table(norm)")
-
-# table(m) # 88.3% : 12877 /14586
-t1 <- table(m) # 大部分用戶只用有一隻庫存基金...
-fundStoreTable <- as.data.frame(t1)
-colnames(fundStoreTable) <- c('庫存基金數','人數')
-fundStoreTable
-
-# tibble(t1)
-
-# head(fund1)
-
-r_b <- binarize(r,minRating=1)
-as(r_b,"matrix")
-
-image(r_b,main = "binary with minTrans=1")
-class(r_b)
-
-## 檢查資料
-rowCounts(r_b[1,])
-rowCounts(r_b[2,])
-rowCounts(r_b[10,])
-hist(rowCounts(r_b), breaks=100)
-
-## model ##
-
-r1 <- Recommender(r_b[1:500,],method="POPULAR")
-names(getModel(r1))
-predictions <- predict(r1, r_b[501:510], type="topNList",n=5)
-as(predictions,"list")
-
-
-r2 <- Recommender(r_b[1:500,],method="IBCF")
-p2 <- predict(r2, r_b[501:510], type="topNList",n=5)
-l <- as(p2,"list")
-
-as(bestN(p2,n=5),"list")
-
-names(getModel(r1))
-names(getModel(r2))
-
 
 
 
